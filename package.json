@@ -1,0 +1,20 @@
+{
+    "name": "everything-everywhere",
+    "version": "1.0.0",
+    "description": "",
+    "main": "server.js",
+    "type": "module",
+    "scripts": {
+      "start": "node server.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+      "async": "^3.2.5",
+      "axios": "^1.7.2",
+      "express": "^4.17.1",
+      "lighthouse": "^12.1.0",
+      "puppeteer": "^22.12.1"
+    }
+  }
