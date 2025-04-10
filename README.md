@@ -114,6 +114,18 @@ The server will immediately respond with a `202 Accepted` status and a JSON body
 
 The actual Lighthouse audit runs in the background. The results will be sent via a `POST` request to the `webhook` URL you provided once the audit is complete.
 
+## Request Queue
+
+To prevent resource conflicts and ensure stable audits, this server uses an internal job queue (`async.queue`). 
+
+*   When a request is received at `/run-lighthouse`, the job details (`url`, `webhook`, `device`) are added to the end of the queue.
+*   The server immediately sends back the `202 Accepted` response.
+*   A single worker process takes jobs from the queue **one at a time**.
+*   The worker runs the full Lighthouse audit (potentially two passes) for the current job.
+*   Only after a job is completely finished (including sending the results to the webhook and closing the browser instance) does the worker take the next job from the queue.
+
+This ensures that multiple concurrent requests are handled sequentially, avoiding errors caused by trying to run multiple resource-intensive Lighthouse audits simultaneously.
+
 ## Webhook Payload Structure
 
 The JSON payload sent to your webhook URL will be an array containing a single object with the summarized Lighthouse results:
