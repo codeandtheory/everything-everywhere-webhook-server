@@ -32,15 +32,13 @@ Before you begin, ensure you have the following installed:
 This server can be configured using environment variables:
 
 *   `PORT`: The port the server listens on (Default: `3001`).
-*   `N8N_PROD_WEBHOOK_URL`: **(Recommended for Production)** Sets a default webhook URL where all results will be sent. If this is set, the `webhook` parameter in the request body becomes optional. If this is *not* set, the `webhook` parameter in the request body is *required*.
 
 ### Setting Environment Variables (Example for Linux/macOS)
 
-You can set these before running the server:
+You can set the port before running the server:
 
 ```bash
 export PORT=8080
-export N8N_PROD_WEBHOOK_URL='https://your-n8n-instance/webhook/your-prod-hook-id'
 
 # Then start the server using npm or pm2
 npm start 
@@ -48,14 +46,13 @@ npm start
 pm2 start ecosystem.config.js 
 ```
 
-When using PM2, it will automatically pick up environment variables set in the shell *or* you can define them directly in the `env` section of `ecosystem.config.js` (as shown in the example file).
+When using PM2, it will automatically pick up environment variables set in the shell or you can define them directly in the `env` section of `ecosystem.config.js`.
 
 When running with Docker, use the `-e` flag:
 
 ```bash
 docker run -d -p 3001:3001 \
   -e PORT=3001 \
-  -e N8N_PROD_WEBHOOK_URL='YOUR_N8N_PRODUCTION_WEBHOOK_URL_HERE' \
   --name lighthouse-server-container \
   lighthouse-server-app
 ```
@@ -134,10 +131,13 @@ To allow external services (like n8n cloud) to reach your local server, you need
 
 Send a `POST` request to the `/run-lighthouse` endpoint on your server (using the `ngrok` URL if accessed externally).
 
-The request body must be JSON and contain:
+The request body must be JSON and **must** contain:
 
 *   `url` (string, required): The URL to audit.
 *   `webhook` (string, required): The webhook URL where the results should be sent.
+
+It can also optionally contain:
+
 *   `device` (string, optional): The device type to simulate. Can be `'mobile'` or `'desktop'`. Defaults to `'mobile'` if omitted.
 
 ### Example Request (Mobile - Default)
@@ -170,7 +170,7 @@ Replace `YOUR_NGROK_URL.ngrok-free.app` and `YOUR_N8N_WEBHOOK_URL` with your act
 **Important Notes for n8n Users:**
 
 *   **HTTP Request Node:** When configuring the HTTP Request node in your n8n workflow to call this server, make sure the `URL` field uses the **public `ngrok` URL** you obtained (e.g., `https://YOUR_NGROK_URL.ngrok-free.app/run-lighthouse`). Do **not** use `http://localhost:3001` unless n8n is running on the exact same machine as this server.
-*   **Webhook URL Parameter:** The `webhook` value you provide in the request body should be the URL of the **n8n Webhook node** that will *receive* the Lighthouse results. Remember to switch from the *Test URL* to the *Production URL* in your n8n Webhook node settings when you activate your workflow.
+*   **Webhook URL Parameter:** The `webhook` value you provide in the request body **must** be the URL of the **n8n Webhook node** that will *receive* the Lighthouse results. Remember to switch from the *Test URL* to the *Production URL* in your n8n Webhook node settings when you activate your workflow.
 *   **HTTP Request Body Structure:** Ensure the *Body Content Type* in the n8n HTTP Request node is set to `JSON`. The JSON body itself should be structured like this, likely using n8n expressions (`{{ ... }}`) to insert dynamic values:
     ```json
     {
@@ -198,10 +198,6 @@ Alternatively, you can build and run this application using Docker. This is usef
     ```bash
     docker run -d -p 3001:3001 --name lighthouse-server-container lighthouse-server-app
     ```
-    *   `-d`: Run the container in detached mode (in the background).
-    *   `-p 3001:3001`: Map port 3001 on your host machine to port 3001 inside the container.
-    *   `--name lighthouse-server-container`: Assign a name to the running container.
-    *   `lighthouse-server-app`: The name of the image to run.
 
     The server should now be running inside the container, accessible at `http://localhost:3001` (or the server's IP if running on a remote machine).
 

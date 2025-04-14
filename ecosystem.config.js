@@ -11,7 +11,7 @@ module.exports = {
       PORT: 3001, // Default port (can be overridden by EC2 environment variables)
       // Set the production webhook URL via environment variable
       // IMPORTANT: Set the actual URL on your EC2 instance environment!
-      N8N_PROD_WEBHOOK_URL: process.env.N8N_PROD_WEBHOOK_URL || 'YOUR_N8N_PRODUCTION_WEBHOOK_URL_HERE'
+      N8N_PROD_WEBHOOK_URL: process.env.N8N_PROD_WEBHOOK_URL || 'https://candt.app.n8n.cloud/webhook/458abb91-7ba0-44c3-a675-6c0f47f2f132'
     }
   }]
 }; 

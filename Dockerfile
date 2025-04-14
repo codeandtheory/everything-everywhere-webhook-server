@@ -4,12 +4,11 @@ FROM node:18-slim
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
-# Install necessary dependencies for Puppeteer and Chrome
-# Reference: https://pptr.dev/troubleshooting#running-puppeteer-in-docker
+# Install necessary dependencies for Puppeteer and Chromium (instead of Chrome)
 RUN apt-get update && apt-get install -y \
-    # Needed for Chrome download
-    wget \
-    # Needed by Puppeteer
+    # Install Chromium browser for ARM64 compatibility
+    chromium \
+    # Needed by Puppeteer/Chromium
     ca-certificates \
     fonts-liberation \
     libappindicator3-1 \
@@ -46,16 +45,9 @@ RUN apt-get update && apt-get install -y \
     libxtst6 \
     lsb-release \
     xdg-utils \
-    # Added gnupg for potential key fetching if needed by future apt updates
+    wget \
     gnupg \
     --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/*
-
-# Download and Install Google Chrome Stable
-RUN wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && apt-get update \
-    && apt-get install -y /tmp/chrome.deb --fix-missing \
-    && rm /tmp/chrome.deb \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy package.json and package-lock.json (or npm-shrinkwrap.json)

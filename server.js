@@ -6,31 +6,37 @@ const app = express();
 app.use(express.json()); // Use built-in JSON parser
 
 const PORT = process.env.PORT || 3001;
-const PROD_WEBHOOK_URL = process.env.N8N_PROD_WEBHOOK_URL;
-
-// Check if the production webhook URL is set in production environment
-if (process.env.NODE_ENV === 'production' && !PROD_WEBHOOK_URL) {
-  console.error('FATAL ERROR: N8N_PROD_WEBHOOK_URL environment variable is not set.');
-  process.exit(1); // Exit if the required env var is missing in prod
-}
+// Remove environment variable constant and check
+// const PROD_WEBHOOK_URL = process.env.N8N_PROD_WEBHOOK_URL;
+// if (process.env.NODE_ENV === 'production' && !PROD_WEBHOOK_URL) { ... }
 
 // --- Create the Job Queue ---
 // Define the worker function that processes each job
 const lighthouseWorker = async (task, callback) => {
-  // Use the production webhook URL if available, otherwise use the one from the task (for testing/flexibility)
-  const targetWebhook = PROD_WEBHOOK_URL || task.webhook; 
+  // Always use the webhook URL passed in the task object from the request body
+  const targetWebhook = task.webhook; 
+  // Log statement simplified as webhook is always from task now
   console.log(`Processing job for URL: ${task.url} (Device: ${task.device}) -> Sending to ${targetWebhook}`);
+  let jobSucceeded = false;
   try {
-    // Pass the determined webhook URL to runLighthouse
     await runLighthouse({ url: task.url, webhook: targetWebhook, device: task.device });
-    console.log(`Finished job for URL: ${task.url} (Device: ${task.device})`);
-    // Call callback without an error to indicate success
-    callback(); 
+    console.log(`Job completed successfully for URL: ${task.url} (Device: ${task.device})`);
+    jobSucceeded = true;
   } catch (error) {
-    console.error(`Job failed for URL: ${task.url} (Device: ${task.device}):`, error.message);
-    // Call callback with an error (optional, depending on desired queue behavior)
-    // The error here is mainly for the queue itself, runLighthouse handles webhook error reporting
-    callback(error); 
+    // runLighthouse function already logs errors internally
+    console.error(`Job processing caught error for URL: ${task.url} (Device: ${task.device}): ${error.message}`);
+    // jobSucceeded remains false
+  } finally {
+    // Ensure callback is always called once after try/catch finishes
+    // Pass the original error if one occurred? async queue might use this.
+    // Let's just signal completion without error for now, as runLighthouse handles reporting.
+    if (typeof callback === 'function') {
+        console.log(`Calling queue callback for ${task.url}`);
+        callback(); // Signal queue worker completion
+    } else {
+        // This case should ideally not happen if async library is working correctly
+        console.error(`Internal Error: Worker callback was not a function for task ${task.url}`);
+    }
   }
 };
 
@@ -48,39 +54,34 @@ lighthouseQueue.error(function(err, task) {
 });
 // --- End Job Queue Setup ---
 
-app.post('/run-lighthouse', (req, res) => { // Removed async here, not needed for pushing
-  // Webhook from body is now optional if N8N_PROD_WEBHOOK_URL is set
+app.post('/run-lighthouse', (req, res) => {
+  // Get url, webhook, device from body. Webhook is now required.
   const { url, webhook, device = 'mobile' } = req.body;
 
-  // URL is always required
-  if (!url) {
-    return res.status(400).json({ error: 'Missing required parameter: url.' });
+  // URL and Webhook are now both required in the request body
+  if (!url || !webhook) { 
+    return res.status(400).json({ 
+        error: 'Missing required parameters: url and webhook.' 
+    });
   }
-
-  // Webhook is required *only if* the N8N_PROD_WEBHOOK_URL env var is NOT set
+  
+  // Remove check related to PROD_WEBHOOK_URL
+  /*
   if (!PROD_WEBHOOK_URL && !webhook) {
-      return res.status(400).json({ 
-        error: 'Missing required parameter: webhook (or N8N_PROD_WEBHOOK_URL env var must be set on server).' 
-      });
+      return res.status(400).json({ ... });
   }
+  */
 
   if (!['mobile', 'desktop'].includes(device)) {
     return res.status(400).json({ error: 'Invalid device parameter. Must be \'mobile\' or \'desktop\'.' });
   }
 
-  // Create the job task object - store the webhook from the request if provided
+  // Create the task object with required webhook
   const task = { url, webhook, device }; 
 
   // Add the task to the queue
-  lighthouseQueue.push(task, (err) => {
-    if (err) {
-      console.error(`Failed to add task to queue for ${url}:`, err);
-      // Optionally, inform the client the push failed
-      // return res.status(500).json({ message: "Failed to queue job." }); 
-    } else {
-      console.log(`Added job to queue for: ${url} (Device: ${device}). Queue length: ${lighthouseQueue.length()}`);
-    }
-  });
+  lighthouseQueue.push(task); 
+  console.log(`Added job to queue for: ${url} (Device: ${device}). Queue length: ${lighthouseQueue.length()}`);
 
   // Respond immediately that the job has been queued
   res.status(202).json({ 
@@ -100,10 +101,9 @@ app.post('/run-lighthouse', (req, res) => { // Removed async here, not needed fo
 });
 
 app.listen(PORT, () => {
+  // Remove logs related to N8N_PROD_WEBHOOK_URL
   console.log(`💡 Lighthouse server with queue running on http://localhost:${PORT}`);
-  if (PROD_WEBHOOK_URL) {
-      console.log(`   Configured to send results to: ${PROD_WEBHOOK_URL}`);
-  } else {
-      console.log(`   WARNING: N8N_PROD_WEBHOOK_URL env var not set. Expecting webhook URL in request body.`);
-  }
+  /* 
+  if (PROD_WEBHOOK_URL) { ... } else { ... } 
+  */
 });

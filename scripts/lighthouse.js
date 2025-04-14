@@ -182,12 +182,12 @@ export default async function runLighthouse({ url, webhook, device = 'mobile' })
   try {
     console.log(`Launching browser for ${url} (${device})...`);
     browser = await puppeteer.launch({
+      executablePath: '/usr/bin/chromium', 
       headless: true,
       args: [
-        '--no-sandbox',
+        '--no-sandbox', 
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--remote-debugging-port=9222' // Still useful for potential debugging
       ]
     });
     port = new URL(browser.wsEndpoint()).port;
