@@ -27,16 +27,54 @@ Before you begin, ensure you have the following installed:
     npm install
     ```
 
-## Running the Server
+## Running the Server (Development - using nodemon or node)
 
-1.  **Start the server:**
+For local development, you can run the server directly:
+
+```bash
+npm start 
+```
+
+This typically uses `node server.js`. The server will run in the foreground.
+
+## Running the Server (Production - using PM2)
+
+For deployment on a server (like EC2), it's recommended to use a process manager like `pm2` to keep the server running reliably in the background.
+
+1.  **Install PM2 globally (if not already installed):**
     ```bash
-    npm start
+    npm install pm2 -g
     ```
-    By default, the server listens on port 3001. You should see output like:
+
+2.  **Navigate to the project directory:**
+    ```bash
+    cd <repository-directory>
     ```
-    💡 Lighthouse server with queue running on http://localhost:3001
+
+3.  **Start the server using the configuration file:**
+    ```bash
+    pm2 start ecosystem.config.js
     ```
+    This will start the `lighthouse-server` application as defined in `ecosystem.config.js`.
+
+4.  **Check Status & Logs:**
+    ```bash
+    pm2 list                # See running processes
+    pm2 logs lighthouse-server # View server logs
+    pm2 stop lighthouse-server # Stop the server
+    pm2 restart lighthouse-server # Restart the server
+    pm2 delete lighthouse-server # Remove from PM2 list
+    ```
+
+5.  **Enable Startup on Reboot (Important for Servers):**
+    ```bash
+    pm2 startup
+    ```
+    Follow the instructions output by `pm2 startup` (usually involves running a command with `sudo`). This ensures PM2 restarts your application if the server reboots.
+    ```bash
+    pm2 save
+    ```
+    Saves the current process list managed by PM2.
 
 ## Exposing with ngrok
 
@@ -109,6 +147,41 @@ Replace `YOUR_NGROK_URL.ngrok-free.app` and `YOUR_N8N_WEBHOOK_URL` with your act
     }
     ```
     *(Replace `YOUR_N8N_PRODUCTION_WEBHOOK_URL_FOR_RESULTS` with the actual URL. Adjust the `{{ $json... }}` expressions based on where your input data (URL to audit, desired device type) comes from in the n8n workflow.)*
+
+## Running with Docker (Optional)
+
+Alternatively, you can build and run this application using Docker. This is useful for creating a consistent environment for deployment.
+
+**Prerequisites:** Docker must be installed.
+
+1.  **Build the Docker Image:**
+    From the root of the project directory, run:
+    ```bash
+    docker build -t lighthouse-server-app .
+    ```
+    This builds the image using the instructions in the `Dockerfile` and tags it as `lighthouse-server-app`.
+
+2.  **Run the Docker Container:**
+    ```bash
+    docker run -d -p 3001:3001 --name lighthouse-server-container lighthouse-server-app
+    ```
+    *   `-d`: Run the container in detached mode (in the background).
+    *   `-p 3001:3001`: Map port 3001 on your host machine to port 3001 inside the container.
+    *   `--name lighthouse-server-container`: Assign a name to the running container.
+    *   `lighthouse-server-app`: The name of the image to run.
+
+    The server should now be running inside the container, accessible at `http://localhost:3001` (or the server's IP if running on a remote machine).
+
+3.  **Check Container Logs:**
+    ```bash
+    docker logs lighthouse-server-container
+    ```
+
+4.  **Stop and Remove the Container:**
+    ```bash
+    docker stop lighthouse-server-container
+    docker rm lighthouse-server-container
+    ```
 
 ## Server Response
 
