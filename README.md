@@ -27,6 +27,39 @@ Before you begin, ensure you have the following installed:
     npm install
     ```
 
+## Configuration
+
+This server can be configured using environment variables:
+
+*   `PORT`: The port the server listens on (Default: `3001`).
+*   `N8N_PROD_WEBHOOK_URL`: **(Recommended for Production)** Sets a default webhook URL where all results will be sent. If this is set, the `webhook` parameter in the request body becomes optional. If this is *not* set, the `webhook` parameter in the request body is *required*.
+
+### Setting Environment Variables (Example for Linux/macOS)
+
+You can set these before running the server:
+
+```bash
+export PORT=8080
+export N8N_PROD_WEBHOOK_URL='https://your-n8n-instance/webhook/your-prod-hook-id'
+
+# Then start the server using npm or pm2
+npm start 
+# OR
+pm2 start ecosystem.config.js 
+```
+
+When using PM2, it will automatically pick up environment variables set in the shell *or* you can define them directly in the `env` section of `ecosystem.config.js` (as shown in the example file).
+
+When running with Docker, use the `-e` flag:
+
+```bash
+docker run -d -p 3001:3001 \
+  -e PORT=3001 \
+  -e N8N_PROD_WEBHOOK_URL='YOUR_N8N_PRODUCTION_WEBHOOK_URL_HERE' \
+  --name lighthouse-server-container \
+  lighthouse-server-app
+```
+
 ## Running the Server (Development - using nodemon or node)
 
 For local development, you can run the server directly:

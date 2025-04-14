@@ -8,7 +8,10 @@ module.exports = {
     max_memory_restart: '1G', // Restart if it exceeds 1GB memory (adjust as needed)
     env: {
       NODE_ENV: 'production', // Set environment to production
-      PORT: 3001 // Default port (can be overridden by EC2 environment variables)
+      PORT: 3001, // Default port (can be overridden by EC2 environment variables)
+      // Set the production webhook URL via environment variable
+      // IMPORTANT: Set the actual URL on your EC2 instance environment!
+      N8N_PROD_WEBHOOK_URL: process.env.N8N_PROD_WEBHOOK_URL || 'YOUR_N8N_PRODUCTION_WEBHOOK_URL_HERE'
     }
   }]
 }; 
