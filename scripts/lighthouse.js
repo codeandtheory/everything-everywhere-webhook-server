@@ -124,7 +124,7 @@ export default async function runLighthouse({ url, webhook, device = 'mobile' })
 
   // Shared settings
   const baseSettings = {
-    maxWaitForLoad: 70000, // Keep increased timeout
+    maxWaitForLoad: 100000, // Increased timeout to 100 seconds
   };
 
   // Mobile-specific settings
@@ -223,10 +223,8 @@ export default async function runLighthouse({ url, webhook, device = 'mobile' })
        if (otherResult?.lhr) {
         otherReport = otherResult.lhr;
         console.log('Lighthouse Pass 2 (Other Categories) completed successfully.');
-        console.log('DEBUG: Pass 2 Report Categories:', JSON.stringify(otherReport?.categories, null, 2));
       } else {
         console.warn('Lighthouse Pass 2 (Other Categories) did not produce a report.');
-        console.log('DEBUG: Pass 2 otherResult object was null or missing lhr.');
       }
     } catch (error) {
       console.error(`Lighthouse Pass 2 (Other Categories) failed for ${url}:`, error.message);
