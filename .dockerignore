@@ -1,7 +1,9 @@
-node_modules
-npm-debug.log
-Dockerfile
 .dockerignore
 .git
 .gitignore
-README.md 
+.vscode
+Dockerfile
+README.md
+node_modules
+npm-debug.log
+ops
